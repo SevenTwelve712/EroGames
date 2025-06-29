@@ -1,12 +1,12 @@
 from PySide6.QtCore import Property, QPoint, QSequentialAnimationGroup
 from PySide6.QtCore import QByteArray, QPropertyAnimation, QParallelAnimationGroup, QEasingCurve
 from PySide6.QtGui import QColor, QMouseEvent, QPixmap
-from PySide6.QtWidgets import QLabel, QGraphicsOpacityEffect, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QLabel, QGraphicsOpacityEffect, QGraphicsDropShadowEffect, QWidget
 
-from TicTacToe.view.PressableWidget import PressableWidget
+from TicTacToe.view.Animations import Animations
 
 
-class TicTacWidget(QLabel):
+class TicTacWidget(QLabel, Animations):
     def __init__(self, coords: tuple[int, int], parent=None):
         super().__init__(parent)
 
@@ -27,44 +27,13 @@ class TicTacWidget(QLabel):
         style = f'border: 2px solid {color.name()}; border-radius: 8px; background-color: #688fa6)'
         self.setStyleSheet(style)
 
+    # Эта анимация здесь, т.к. она не переиспользуема из-за нестандартного свойства
     def do_border_animation(self, duration: int, start_val, end_val, property_name: QByteArray) -> QPropertyAnimation:
         animation = QPropertyAnimation(self, property_name)
         animation.setDuration(duration)
         animation.setStartValue(start_val)
         animation.setEndValue(end_val)
         return animation
-
-    def animate_img_opacity(self, duration: int, start_opacity: float, end_opacity: float) -> QPropertyAnimation:
-        effect = QGraphicsOpacityEffect(self, opacity=start_opacity)
-        self.setGraphicsEffect(effect)
-        animation = QPropertyAnimation(effect, QByteArray(b'opacity'))
-        animation.setDuration(duration)
-        animation.setStartValue(start_opacity)
-        animation.setEndValue(end_opacity)
-        return animation
-
-    def animate_img_glowing_pulsar(self, duration: int, start_radius: float, end_radius: float) -> QSequentialAnimationGroup:
-        effect = QGraphicsDropShadowEffect(self, blurRadius=start_radius, color=QColor('#FFCF48'))
-        effect.setOffset(QPoint(0, 0))
-        self.setGraphicsEffect(effect)
-
-        anim_seq = QSequentialAnimationGroup()
-
-        animation_there = QPropertyAnimation(effect, QByteArray(b'blurRadius'))
-        animation_there.setDuration(duration)
-        animation_there.setStartValue(start_radius)
-        animation_there.setEndValue(end_radius)
-
-        animation_back = QPropertyAnimation(effect, QByteArray(b'blurRadius'))
-        animation_back.setDuration(duration)
-        animation_back.setStartValue(end_radius)
-        animation_back.setEndValue(start_radius)
-
-        anim_seq.addAnimation(animation_there)
-        anim_seq.addAnimation(animation_back)
-        anim_seq.setLoopCount(-1)
-
-        return anim_seq
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if self.filled or self.game.ended:
@@ -81,14 +50,16 @@ class TicTacWidget(QLabel):
             self.setScaledContents(True)
 
             # Делаем анимации
-            self.img_animation = self.animate_img_opacity(1000, 0.35, 1.0)
+            self.img_animation = self.img_opacity_animation(1000, 0.35, 1.0)
             self.animation_border = self.do_border_animation(500, self.border_color_start, self.border_color_stop,
                                                              QByteArray(b'color'))
+            self.pressing_animation = self.press_animation(self.geometry(), 0.95, 100)
 
             # Объединяем анимации
             self.animation_group = QParallelAnimationGroup(self)
             self.animation_group.addAnimation(self.img_animation)
             self.animation_group.addAnimation(self.animation_border)
+            self.animation_group.addAnimation(self.pressing_animation)
             self.animation_group.start()
 
             self.animation_group.finished.connect(lambda: self.do_border_animation(500, self.border_color_stop,
@@ -113,3 +84,9 @@ class TicTacWidget(QLabel):
         effect.setOpacity(1.0)
 
     borderColor = Property(QColor, getBorderColor, setBorderColor)
+
+
+class TicTacToeShellWidget(QWidget, Animations):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+

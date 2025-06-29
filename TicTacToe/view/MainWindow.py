@@ -2,7 +2,7 @@ from PySide6.QtCore import QSize, Qt, QByteArray, QParallelAnimationGroup
 from PySide6.QtWidgets import QMainWindow, QGridLayout, QLabel, QWidget, QVBoxLayout, QPushButton, \
     QHBoxLayout
 
-from TicTacToe.view.TicTacToeWidget import TicTacWidget
+from TicTacToe.view.TicTacToeWidget import TicTacWidget, TicTacToeShellWidget
 from TicTacToe.game_logic import Game
 
 
@@ -49,9 +49,12 @@ class MainWnd(QMainWindow):
 
         for i in range(3):
             for j in range(3):
-                w = TicTacWidget((i, j), parent=self.field_widget)
-                w.setFixedSize(QSize(200, 200))
-                field.addWidget(w, i, j)
+                # Оборачиваем сами виджеты в обертку, чтобы корректно работала анимация размера
+                shell = TicTacToeShellWidget(parent=self.field_widget)
+                shell.setMinimumSize(QSize(100, 100))
+                w = TicTacWidget((i, j), parent=shell)
+                w.resize(100, 100)
+                field.addWidget(shell, i, j)
 
     def do_menu(self):
         self.menu_widget = QWidget()
@@ -98,7 +101,8 @@ class MainWnd(QMainWindow):
         self.game.new_game()
         field_layout = self.center_layout.itemAt(2).widget().layout()
         for i in range(field_layout.count()):
-            field_layout.itemAt(i).widget().clear()
+            field_layout.itemAt(i).widget().setGraphicsEffect(None)
+            field_layout.itemAt(i).widget().findChild(TicTacWidget).clear()
         self.step_counter.setText(f'Ход игрока {self.game.current_player}')
 
     def do_clear_count(self):
@@ -123,14 +127,15 @@ class MainWnd(QMainWindow):
         for row in range(3):
             for col in range(3):
                 if (row, col) not in win_positions:
-                    widget: TicTacWidget = field_layout.itemAtPosition(row, col).widget()
-                    animations.append(widget.animate_img_opacity(2000, 1.0, 0.4))
+                    widget: TicTacWidget = field_layout.itemAtPosition(row, col).widget().findChild(TicTacWidget)
+                    animations.append(widget.img_opacity_animation(2000, 1.0, 0.4))
         for animation in animations:
             self.blackout_animations.addAnimation(animation)
 
-        # Делаем анимацию свечения бордера
+        # Делаем анимацию свечения бордера именно у оболочки, так как если мы сделаем анимацию у самого виджета,
+        # то она выйдет за пределы родительского виджета и не будет отображаться
         for row, col in win_positions:
-            widget: TicTacWidget = field_layout.itemAtPosition(row, col).widget()
-            self.border_glowing_animations.addAnimation(widget.animate_img_glowing_pulsar(1000, 20.0, 200.0))
+            widget: TicTacToeShellWidget = field_layout.itemAtPosition(row, col).widget()
+            self.border_glowing_animations.addAnimation(widget.img_glowing_pulsar_animation(1000, 20.0, 100.0))
         self.blackout_animations.start()
         self.border_glowing_animations.start()
