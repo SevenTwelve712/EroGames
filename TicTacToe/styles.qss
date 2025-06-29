@@ -1,0 +1,37 @@
+QLabel#tictac {
+    border: 2px solid black;
+    border-radius: 8px;
+    background-color: #688fa6;
+}
+
+QLabel#win_animation {
+    background: rgba(0, 0, 0, 0);
+    border: 2px solid black;
+}
+
+QWidget#field_widget {
+    border: 2px solid black;
+    border-radius: 8px;
+    background:
+}
+
+QPushButton{
+    background-color: #688fa6;
+    text-align: center;
+    font-size: 20px;
+    border-radius: 8px;
+    border: 2px solid black;
+    padding: 10px 20px;
+}
+
+QLabel {
+    font-size: 30px;
+}
+
+QLabel#name {
+    font-size: 60px;
+}
+
+MainWnd{
+    background-color: #e0f7fa;
+}
