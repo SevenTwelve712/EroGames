@@ -1,8 +1,9 @@
-from PySide6.QtCore import QSize, Qt, QByteArray, QParallelAnimationGroup
+from PySide6.QtCore import QSize, Qt, QByteArray, QParallelAnimationGroup, QPoint
 from PySide6.QtWidgets import QMainWindow, QGridLayout, QLabel, QWidget, QVBoxLayout, QPushButton, \
     QHBoxLayout
 
-from TicTacToe.view.TicTacToeWidget import TicTacWidget, TicTacToeShellWidget
+from TicTacToe.view.PressableButtonWidget import PressableButtonWidget
+from TicTacToe.view.TicTacToeWidget import TicTacWidget
 from TicTacToe.game_logic import Game
 
 
@@ -42,19 +43,18 @@ class MainWnd(QMainWindow):
         self.field_widget = QWidget(self)
         self.field_widget.setObjectName('field_widget')
         self.field_widget.setParent(self.center_widget)
-
-        field = QGridLayout()
-        self.field_widget.setLayout(field)
         self.center_layout.addWidget(self.field_widget)
+
+        space = 10
+        size = 200
+
+        self.field_widget.setMinimumSize(space * 4 + size * 3, space * 4 + size * 3)
 
         for i in range(3):
             for j in range(3):
-                # Оборачиваем сами виджеты в обертку, чтобы корректно работала анимация размера
-                shell = TicTacToeShellWidget(parent=self.field_widget)
-                shell.setMinimumSize(QSize(100, 100))
-                w = TicTacWidget((i, j), parent=shell)
-                w.resize(100, 100)
-                field.addWidget(shell, i, j)
+                w = TicTacWidget((i, j), parent=self.field_widget)
+                w.resize(QSize(200, 200))
+                w.move(QPoint(space * (j + 1) + size * j, space * (i + 1) + size * i))
 
     def do_menu(self):
         self.menu_widget = QWidget()
@@ -62,16 +62,22 @@ class MainWnd(QMainWindow):
         self.menu_widget.setLayout(menu_layout)
 
         # Делаем кнопку перезагрузки игры
-        reset = QPushButton('Перезапустить')
+        reset_shell = QWidget(parent=self.menu_widget)
+        reset_shell.setMinimumSize(200, 65)
+        self.menu_widget.layout().addWidget(reset_shell, alignment=Qt.AlignCenter)
+
+        reset = PressableButtonWidget('Перезапустить', parent=reset_shell)
         reset.clicked.connect(self.do_reset)
-        reset.setMaximumSize(QSize(200, 100))
-        self.menu_widget.layout().addWidget(reset)
+        reset.resize(QSize(200, 65))
 
         # Делаем кнопку сброса счета
-        clear_count = QPushButton('Очистить счет')
+        clear_count_shell = QWidget(parent=self.menu_widget)
+        clear_count_shell.setMinimumSize(200, 65)
+        self.menu_widget.layout().addWidget(clear_count_shell, alignment=Qt.AlignCenter)
+
+        clear_count = PressableButtonWidget('Очистить счет', parent=clear_count_shell)
         clear_count.clicked.connect(self.do_clear_count)
-        clear_count.setMaximumSize(QSize(200, 100))
-        self.menu_widget.layout().addWidget(clear_count)
+        clear_count.resize(QSize(200, 65))
 
         self.center_layout.addWidget(self.menu_widget)
 
@@ -99,10 +105,9 @@ class MainWnd(QMainWindow):
 
         # Обновим логику игры и поле
         self.game.new_game()
-        field_layout = self.center_layout.itemAt(2).widget().layout()
-        for i in range(field_layout.count()):
-            field_layout.itemAt(i).widget().setGraphicsEffect(None)
-            field_layout.itemAt(i).widget().findChild(TicTacWidget).clear()
+        for widget in self.field_widget.children():
+            widget.setGraphicsEffect(None)
+            widget.clear()
         self.step_counter.setText(f'Ход игрока {self.game.current_player}')
 
     def do_clear_count(self):
@@ -120,22 +125,12 @@ class MainWnd(QMainWindow):
         self.count_tab_widget.layout().itemAt(0).widget().setText(f'Tits: {self.game.tits_win}')
         self.count_tab_widget.layout().itemAt(1).widget().setText(f'Ass: {self.game.ass_win}')
 
-        field_layout: QGridLayout = self.field_widget.layout()
-        # Анимация победы.
-        # Затемняем невыигрышные ячейки
-        animations = []
-        for row in range(3):
-            for col in range(3):
-                if (row, col) not in win_positions:
-                    widget: TicTacWidget = field_layout.itemAtPosition(row, col).widget().findChild(TicTacWidget)
-                    animations.append(widget.img_opacity_animation(2000, 1.0, 0.4))
-        for animation in animations:
-            self.blackout_animations.addAnimation(animation)
+        # Затемняем невыигрышные ячейки, подсвечиваем выигрышные
+        for widget in self.field_widget.children():
+            if widget.coords not in win_positions:
+                self.blackout_animations.addAnimation(widget.img_opacity_animation(2000, 1.0, 0.4))
+            else:
+                self.border_glowing_animations.addAnimation(widget.img_glowing_pulsar_animation(1000, 20.0, 70.0))
 
-        # Делаем анимацию свечения бордера именно у оболочки, так как если мы сделаем анимацию у самого виджета,
-        # то она выйдет за пределы родительского виджета и не будет отображаться
-        for row, col in win_positions:
-            widget: TicTacToeShellWidget = field_layout.itemAtPosition(row, col).widget()
-            self.border_glowing_animations.addAnimation(widget.img_glowing_pulsar_animation(1000, 20.0, 100.0))
         self.blackout_animations.start()
         self.border_glowing_animations.start()

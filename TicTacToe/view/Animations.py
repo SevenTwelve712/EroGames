@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget, QGraphicsDropShad
 
 
 class Animations:
-    def press_animation(self, obj_geometry: QSize, scale_factor: float, duration: int) -> QSequentialAnimationGroup:
+    def press_animation_there(self, obj_geometry: QRect, scale_factor: float, duration: int) -> QPropertyAnimation:
         # Рассчитываем новый размер виджета
         center = obj_geometry.center()
         new_width = int(obj_geometry.width() * scale_factor)
@@ -24,18 +24,21 @@ class Animations:
         anim_there.setStartValue(obj_geometry)
         anim_there.setEndValue(new_geometry)
         anim_there.setDuration(duration)
+        anim_there.setEasingCurve(QEasingCurve.InQuad)
 
+        return anim_there
+
+    def press_animation_back(self, obj_geometry: QRect, old_geometry: QRect, duration: int) -> QPropertyAnimation:
+        # Старый размер нужен, чтобы все размер возвращался в норму, если заново его считать, будут мини погрешности,
+        # которые изменят размер виджета.
         # Делаем анимацию обратно
         anim_back = QPropertyAnimation(self, QByteArray(b"geometry"))
-        anim_back.setStartValue(new_geometry)
-        anim_back.setEndValue(obj_geometry)
+        anim_back.setStartValue(obj_geometry)
+        anim_back.setEndValue(old_geometry)
         anim_back.setDuration(duration)
+        anim_back.setEasingCurve(QEasingCurve.OutQuad)
 
-        # Группируем
-        seq = QSequentialAnimationGroup()
-        seq.addAnimation(anim_there)
-        seq.addAnimation(anim_back)
-        return seq
+        return anim_back
 
     def img_opacity_animation(self, duration: int, start_opacity: float, end_opacity: float) -> QPropertyAnimation:
         effect = QGraphicsOpacityEffect(self, opacity=start_opacity)
@@ -47,7 +50,7 @@ class Animations:
         return animation
 
     def img_glowing_pulsar_animation(self, duration: int, start_radius: float, end_radius: float) -> QSequentialAnimationGroup:
-        effect = FixedShadowEffect(self, blurRadius=start_radius, color=QColor('#FFCF48'))
+        effect = QGraphicsDropShadowEffect(self, blurRadius=start_radius, color=QColor('#FFCF48'))
         effect.setOffset(QPoint(0, 0))
         self.setGraphicsEffect(effect)
 
@@ -68,8 +71,3 @@ class Animations:
         anim_seq_.setLoopCount(-1)
 
         return anim_seq_
-
-
-class FixedShadowEffect(QGraphicsDropShadowEffect):
-    def boundingRectFor(self, rect):
-        return rect.adjusted(0, 0, 200, 200)
