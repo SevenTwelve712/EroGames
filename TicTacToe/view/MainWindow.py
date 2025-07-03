@@ -128,9 +128,11 @@ class MainWnd(QMainWindow):
         # Затемняем невыигрышные ячейки, подсвечиваем выигрышные
         for widget in self.field_widget.children():
             if widget.coords not in win_positions:
-                self.blackout_animations.addAnimation(widget.img_opacity_animation(2000, 1.0, 0.4))
+                widget.do_img_opacity_animation(2000, 1.0, 0.4)
+                self.blackout_animations.addAnimation(widget.img_opacity_animation)
             else:
-                self.border_glowing_animations.addAnimation(widget.img_glowing_pulsar_animation(1000, 20.0, 70.0))
+                widget.do_img_glowing_pulsar_animation(1000, 20.0, 70.0)
+                self.border_glowing_animations.addAnimation(widget.img_glowing_pulsar_animation)
 
         self.blackout_animations.start()
         self.border_glowing_animations.start()

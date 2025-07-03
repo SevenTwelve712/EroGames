@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget, QGraphicsDropShad
 
 
 class Animations:
-    def press_animation_there(self, obj_geometry: QRect, scale_factor: float, duration: int) -> QPropertyAnimation:
+    def do_press_animation_there(self, obj_geometry: QRect, scale_factor: float, duration: int) -> None:
         # Рассчитываем новый размер виджета
         center = obj_geometry.center()
         new_width = int(obj_geometry.width() * scale_factor)
@@ -20,41 +20,38 @@ class Animations:
         )
 
         # Делаем анимацию туда
-        anim_there = QPropertyAnimation(self, QByteArray(b"geometry"))
-        anim_there.setStartValue(obj_geometry)
-        anim_there.setEndValue(new_geometry)
-        anim_there.setDuration(duration)
-        anim_there.setEasingCurve(QEasingCurve.InQuad)
+        self.press_animation_there = QPropertyAnimation(self, QByteArray(b"geometry"))
+        self.press_animation_there.setStartValue(obj_geometry)
+        self.press_animation_there.setEndValue(new_geometry)
+        self.press_animation_there.setDuration(duration)
+        self.press_animation_there.setEasingCurve(QEasingCurve.InQuad)
 
-        return anim_there
-
-    def press_animation_back(self, obj_geometry: QRect, old_geometry: QRect, duration: int) -> QPropertyAnimation:
+    def do_press_animation_back(self, obj_geometry: QRect, old_geometry: QRect, duration: int) -> None:
         # Старый размер нужен, чтобы все размер возвращался в норму, если заново его считать, будут мини погрешности,
         # которые изменят размер виджета.
         # Делаем анимацию обратно
-        anim_back = QPropertyAnimation(self, QByteArray(b"geometry"))
-        anim_back.setStartValue(obj_geometry)
-        anim_back.setEndValue(old_geometry)
-        anim_back.setDuration(duration)
-        anim_back.setEasingCurve(QEasingCurve.OutQuad)
+        self.press_animation_back = QPropertyAnimation(self, QByteArray(b"geometry"))
+        self.press_animation_back.setStartValue(obj_geometry)
+        self.press_animation_back.setEndValue(old_geometry)
+        self.press_animation_back.setDuration(duration)
+        self.press_animation_back.setEasingCurve(QEasingCurve.OutQuad)
 
-        return anim_back
+    def do_img_opacity_animation(self, duration: int, start_opacity: float, end_opacity: float) -> None:
+        # Делаем эффект
+        opacity_effect = QGraphicsOpacityEffect(self, opacity=0.35)
+        self.setGraphicsEffect(opacity_effect)
 
-    def img_opacity_animation(self, duration: int, start_opacity: float, end_opacity: float) -> QPropertyAnimation:
-        effect = QGraphicsOpacityEffect(self, opacity=start_opacity)
-        self.setGraphicsEffect(effect)
-        animation = QPropertyAnimation(effect, QByteArray(b'opacity'))
-        animation.setDuration(duration)
-        animation.setStartValue(start_opacity)
-        animation.setEndValue(end_opacity)
-        return animation
+        self.img_opacity_animation = QPropertyAnimation(opacity_effect, QByteArray(b'opacity'))
+        self.img_opacity_animation.setDuration(duration)
+        self.img_opacity_animation.setStartValue(start_opacity)
+        self.img_opacity_animation.setEndValue(end_opacity)
 
-    def img_glowing_pulsar_animation(self, duration: int, start_radius: float, end_radius: float) -> QSequentialAnimationGroup:
+    def do_img_glowing_pulsar_animation(self, duration: int, start_radius: float, end_radius: float) -> None:
         effect = QGraphicsDropShadowEffect(self, blurRadius=start_radius, color=QColor('#FFCF48'))
         effect.setOffset(QPoint(0, 0))
         self.setGraphicsEffect(effect)
 
-        anim_seq_ = QSequentialAnimationGroup()
+        self.img_glowing_pulsar_animation = QSequentialAnimationGroup(self)
 
         animation_there = QPropertyAnimation(effect, QByteArray(b'blurRadius'))
         animation_there.setDuration(duration)
@@ -66,8 +63,6 @@ class Animations:
         animation_back.setStartValue(end_radius)
         animation_back.setEndValue(start_radius)
 
-        anim_seq_.addAnimation(animation_there)
-        anim_seq_.addAnimation(animation_back)
-        anim_seq_.setLoopCount(-1)
-
-        return anim_seq_
+        self.img_glowing_pulsar_animation.addAnimation(animation_there)
+        self.img_glowing_pulsar_animation.addAnimation(animation_back)
+        self.img_glowing_pulsar_animation.setLoopCount(-1)

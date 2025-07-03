@@ -15,7 +15,6 @@ class TicTacWidget(QLabel, Animations):
         self.filled = False
         self.mouse_released = False
         self.press_animation_played = False
-        self.border_size = 2
         self.border_color_start = QColor('black')
         self.border_color_stop = QColor('#315b6d')
         self.old_geometry = None
@@ -27,12 +26,12 @@ class TicTacWidget(QLabel, Animations):
         return self.border_color_start
 
     def setBorderColor(self, color: QColor):
-        style = f'border: 2px solid {color.name()}; border-radius: 8px; background-color: #688fa6)'
+        style = f'border: 2px solid {color.name()}; border-radius: 8px'
         self.setStyleSheet(style)
 
     # Эта анимация здесь, т.к. она не переиспользуема из-за нестандартного свойства
-    def do_border_animation(self, duration: int, start_val, end_val, property_name: QByteArray) -> QPropertyAnimation:
-        animation = QPropertyAnimation(self, property_name)
+    def do_border_animation(self, duration: int, start_val, end_val) -> QPropertyAnimation:
+        animation = QPropertyAnimation(self, QByteArray(b'borderColor'))
         animation.setDuration(duration)
         animation.setStartValue(start_val)
         animation.setEndValue(end_val)
@@ -45,32 +44,29 @@ class TicTacWidget(QLabel, Animations):
             return
 
         self.filled = True
-        player = self.game.current_player
 
         # Задаем картинку
-        img = 'tits.png' if player == 'tits' else 'ass.png'
+        img = 'tits.png' if self.game.current_player == 'tits' else 'ass.png'
         self.setPixmap(QPixmap(img))
         self.setScaledContents(True)
 
-        self.animation_group = QParallelAnimationGroup(self)
-        # Определяем анимации и добавляем их в группу
-        self.img_animation = self.img_opacity_animation(1000, 0.35, 1.0)
-        self.animation_group.addAnimation(self.img_animation)
+        # Анимации
+        self.mouse_release_group = QParallelAnimationGroup(self)
 
-        self.animation_border = self.do_border_animation(500, self.border_color_start, self.border_color_stop,
-                                                         QByteArray(b'color'))
-        self.animation_group.addAnimation(self.animation_border)
+        self.do_img_opacity_animation(1000, 0.35, 1.0)
+        self.mouse_release_group.addAnimation(self.img_opacity_animation)
 
+        # Если анимация нажатия уже проиграна, добавляем анимации отжатия. Если нет, этим будет заниматься контроллер
         if self.press_animation_played:
-            self.pressing_animation_back = self.press_animation_back(self.geometry(), self.old_geometry, 100)
-            self.animation_group.addAnimation(self.pressing_animation_back)
+            self.border_animation_back = self.do_border_animation(100, self.border_color_stop, self.border_color_start)
+            self.mouse_release_group.addAnimation(self.border_animation_back)
+
+            self.do_press_animation_back(self.geometry(), self.old_geometry, 100)
+            self.mouse_release_group.addAnimation(self.press_animation_back)
+
             self.press_animation_played = False
 
-
-        self.animation_group.start()
-        self.animation_group.finished.connect(lambda: self.do_border_animation(500, self.border_color_stop,
-                                                                               self.border_color_start,
-                                                                               QByteArray(b'color')))
+        self.mouse_release_group.start()
 
         # Обновляем игровую логику. По идее, это нужно делать в начале,
         # но тогда анимация финиша будет играть до анимации самой ячейки, и произойдет накладка
@@ -88,9 +84,16 @@ class TicTacWidget(QLabel, Animations):
             ev.ignore()
             return
 
-        self.animation_there = self.press_animation_there(self.geometry(), 0.92, 100)
-        self.animation_there.start()
-        self.animation_there.finished.connect(self.release_animation_controller)
+        self.mouse_press_group = QParallelAnimationGroup(self)
+
+        self.border_animation_there = self.do_border_animation(100, self.border_color_start, self.border_color_stop)
+        self.mouse_press_group.addAnimation(self.border_animation_there)
+
+        self.do_press_animation_there(self.geometry(), 0.92, 100)
+        self.mouse_press_group.addAnimation(self.press_animation_there)
+
+        self.mouse_press_group.finished.connect(self.release_animation_controller)
+        self.mouse_press_group.start()
         ev.accept()
 
     def clear(self, /) -> None:
@@ -100,7 +103,7 @@ class TicTacWidget(QLabel, Animations):
         self.setGraphicsEffect(effect)
         effect.setOpacity(1.0)
 
-    # Запилим эти два метода, чтобы динамически менять старую геометрию виджета
+    # Переопределим эти два метода, чтобы динамически менять старую геометрию виджета
     def move(self, arg__1: QPoint, /) -> None:
         super().move(arg__1)
         self.old_geometry = self.geometry()
@@ -111,15 +114,21 @@ class TicTacWidget(QLabel, Animations):
 
     def release_animation_controller(self):
         if self.mouse_released:
-            self.animation_back = self.press_animation_back(self.geometry(), self.old_geometry, 100)
-            self.animation_back.start()
+            # Если так, то мышь была отжата до того, как анимации нажатия проигрались,
+            # значит нам надо их проиграть сейчас
+            self.mouse_release_group = QParallelAnimationGroup(self)
+
+            self.border_animation_back = self.do_border_animation(100, self.border_color_stop, self.border_color_start)
+            self.mouse_release_group.addAnimation(self.border_animation_back)
+
+            self.do_press_animation_back(self.geometry(), self.old_geometry, 100)
+            self.mouse_release_group.addAnimation(self.press_animation_back)
+
+            self.mouse_release_group.start()
             self.mouse_released = False
 
         else:
+            # В ином случае анимации нажатия проиграет событие отжатия мыши
             self.press_animation_played = True
 
-
-
-
     borderColor = Property(QColor, getBorderColor, setBorderColor)
-
