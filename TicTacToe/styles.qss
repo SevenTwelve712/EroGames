@@ -35,3 +35,8 @@ QLabel#name {
 MainWnd{
     background-color: #e0f7fa;
 }
+
+QToolTip {
+    background-color: #85adb2;
+    font-size: 15px;
+}

@@ -46,7 +46,7 @@ class TicTacWidget(QLabel, Animations):
         self.filled = True
 
         # Задаем картинку
-        img = 'tits.png' if self.game.current_player == 'tits' else 'ass.png'
+        img = self.main_wnd.switch.curr_pack.tits_img if self.game.current_player == 'tits' else self.main_wnd.switch.curr_pack.ass_img
         self.setPixmap(QPixmap(img))
         self.setScaledContents(True)
 
@@ -76,7 +76,7 @@ class TicTacWidget(QLabel, Animations):
             self.main_wnd.finish(res, win_positions)
         else:
             step_counter = self.main_wnd.step_counter
-            step_counter.setText(f'Ход игрока {self.game.current_player}')
+            step_counter.setText(f'Ход игрока {self.main_wnd.switch.curr_pack.tits_name if self.game.current_player == "tits" else self.main_wnd.switch.curr_pack.ass_name}')
         event.accept()
 
     def mousePressEvent(self, ev: QMouseEvent, /) -> None:

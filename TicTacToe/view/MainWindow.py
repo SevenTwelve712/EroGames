@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QMainWindow, QGridLayout, QLabel, QWidget, QVBoxLa
 from TicTacToe.view.PressableButtonWidget import PressableButtonWidget
 from TicTacToe.view.TicTacToeWidget import TicTacWidget
 from TicTacToe.game_logic import Game
+from TicTacToe.view.ToggleSwitchWidget import ToggleSwitchWidget
 
 
 class MainWnd(QMainWindow):
@@ -22,11 +23,15 @@ class MainWnd(QMainWindow):
         self.blackout_animations = QParallelAnimationGroup()
         self.border_glowing_animations = QParallelAnimationGroup()
 
+        # Делаем свитч здесь, чтобы определить ресурс пак
+        self.switch = ToggleSwitchWidget(200, 80, parent=self)
+
         self.do_name()
         self.do_step_counter()
         self.do_field()
         self.do_menu()
         self.do_count_tab()
+        self.do_resource_pack_choose()
 
     def do_name(self):
         self.name = QLabel('Крестики-нолики')
@@ -34,7 +39,7 @@ class MainWnd(QMainWindow):
         self.center_layout.addWidget(self.name, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def do_step_counter(self):
-        self.step_counter = QLabel(f'Ход игрока {self.game.current_player}')
+        self.step_counter = QLabel(f'Ход игрока {self.switch.curr_pack.tits_name if self.game.current_player == "tits" else self.switch.curr_pack.ass_name}')
         self.step_counter.setObjectName('step_counter')
         self.center_layout.addWidget(self.step_counter, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -87,43 +92,57 @@ class MainWnd(QMainWindow):
         self.count_tab_widget.setLayout(count_tab_layout)
 
         # Делаем счет для tits
-        tits_count = QLabel('Tits: 0')
+        tits_count = QLabel(f'{self.switch.curr_pack.tits_name}: 0')
         tits_count.setAlignment(Qt.AlignmentFlag.AlignCenter)
         count_tab_layout.addWidget(tits_count)
 
         # Делаем счет для ass
-        ass_count = QLabel('Ass: 0')
+        ass_count = QLabel(f'{self.switch.curr_pack.ass_name}: 0')
         ass_count.setAlignment(Qt.AlignmentFlag.AlignCenter)
         count_tab_layout.addWidget(ass_count)
 
         self.center_layout.addWidget(self.count_tab_widget)
+
+    def do_resource_pack_choose(self):
+        self.center_layout.addWidget(self.switch, alignment=Qt.AlignCenter)
+
+        # Блокируем свитч
+        self.switch.set_blocked(True)
 
     def do_reset(self):
         # Остановим анимации победы (если еще идут)
         self.blackout_animations.stop()
         self.border_glowing_animations.stop()
 
+        self.switch.set_blocked(True)
+
         # Обновим логику игры и поле
         self.game.new_game()
         for widget in self.field_widget.children():
             widget.setGraphicsEffect(None)
             widget.clear()
-        self.step_counter.setText(f'Ход игрока {self.game.current_player}')
+
+        self.step_counter.setText(f'Ход игрока {self.switch.curr_pack.tits_name if self.game.current_player == "tits" else self.switch.curr_pack.ass_name}')
+        # на всякий случай перезапишем текст в виджетах счета
+        self.count_tab_widget.layout().itemAt(0).widget().setText(
+            f'{self.switch.curr_pack.tits_name}: {self.game.tits_win}')
+        self.count_tab_widget.layout().itemAt(1).widget().setText(
+            f'{self.switch.curr_pack.ass_name}: {self.game.ass_win}')
 
     def do_clear_count(self):
         self.game.reset_count()
-        self.count_tab_widget.layout().itemAt(0).widget().setText(f'Tits: 0')
-        self.count_tab_widget.layout().itemAt(1).widget().setText(f'Ass: 0')
+        self.count_tab_widget.layout().itemAt(0).widget().setText(f'{self.switch.curr_pack.tits_name}: 0')
+        self.count_tab_widget.layout().itemAt(1).widget().setText(f'{self.switch.curr_pack.ass_name}: 0')
 
     def finish(self, res: str, win_positions: list):
-        text = 'Ничья' if res == 'nobody' else f'Выиграл игрок {res}'
+        text = 'Ничья' if res == 'nobody' else f'Выиграл игрок {self.switch.curr_pack.tits_name if res == "tits" else self.switch.curr_pack.ass_name}'
         self.step_counter.setText(text)
         # Если ничья, то больше ничего не надо делать
         if res == 'nobody':
             return
         # Обновим счетчик выигрышей
-        self.count_tab_widget.layout().itemAt(0).widget().setText(f'Tits: {self.game.tits_win}')
-        self.count_tab_widget.layout().itemAt(1).widget().setText(f'Ass: {self.game.ass_win}')
+        self.count_tab_widget.layout().itemAt(0).widget().setText(f'{self.switch.curr_pack.tits_name}: {self.game.tits_win}')
+        self.count_tab_widget.layout().itemAt(1).widget().setText(f'{self.switch.curr_pack.ass_name}: {self.game.ass_win}')
 
         # Затемняем невыигрышные ячейки, подсвечиваем выигрышные
         for widget in self.field_widget.children():
@@ -136,3 +155,6 @@ class MainWnd(QMainWindow):
 
         self.blackout_animations.start()
         self.border_glowing_animations.start()
+
+        # Разблокируем свитч
+        self.switch.set_blocked(False)
