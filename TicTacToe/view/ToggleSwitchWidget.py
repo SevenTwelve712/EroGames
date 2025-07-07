@@ -1,7 +1,7 @@
-from PySide6.QtCore import QPoint, QRect, QRectF, QByteArray, QSize, QParallelAnimationGroup
-from PySide6.QtGui import QPaintEvent, QPainter, Qt, QBrush, QColor, QPen
-from PySide6.QtWidgets import QAbstractButton, QApplication, QWidget, QGraphicsDropShadowEffect
 from PySide6.QtCore import Property, QPropertyAnimation
+from PySide6.QtCore import QRect, QByteArray, QSize, QParallelAnimationGroup
+from PySide6.QtGui import QPaintEvent, QPainter, QBrush, QColor, QPen
+from PySide6.QtWidgets import QAbstractButton
 
 from TicTacToe.resourse_pack import ResourcePack
 
@@ -128,15 +128,3 @@ class ToggleSwitchWidget(QAbstractButton):
     switchColor = Property(QColor, getSwitchColor, setSwitchColor)
     roundColor = Property(QColor, getRoundColor, setRoundColor)
     roundX = Property(int, getRoundX, setRoundX)
-
-
-# app = QApplication([])
-#
-# main_wnd = QWidget()
-# main_wnd.setGeometry(600, 100, 1000, 1000)
-# switch = ToggleSwitchWidget(500, 200, parent=main_wnd)
-# main_wnd.setWindowTitle('TicTacToe')
-# switch.move(100, 200)
-# main_wnd.show()
-#
-# app.exec()

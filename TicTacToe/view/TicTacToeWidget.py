@@ -1,7 +1,7 @@
-from PySide6.QtCore import Property, QPoint, QSequentialAnimationGroup, QEvent, QSize, QRect
-from PySide6.QtCore import QByteArray, QPropertyAnimation, QParallelAnimationGroup, QEasingCurve
+from PySide6.QtCore import Property, QPoint, QSize
+from PySide6.QtCore import QByteArray, QPropertyAnimation, QParallelAnimationGroup
 from PySide6.QtGui import QColor, QMouseEvent, QPixmap
-from PySide6.QtWidgets import QLabel, QGraphicsOpacityEffect, QGraphicsDropShadowEffect, QWidget
+from PySide6.QtWidgets import QLabel, QGraphicsOpacityEffect
 
 from TicTacToe.view.Animations import Animations
 

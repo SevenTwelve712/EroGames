@@ -49,6 +49,3 @@ class Game:
     def reset_count(self):
         self.tits_win = 0
         self.ass_win = 0
-
-
-

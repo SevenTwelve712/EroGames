@@ -1,9 +1,7 @@
-from typing import Union
-
-from PySide6.QtCore import QPropertyAnimation, QRect, QByteArray, QSize, QEasingCurve, QSequentialAnimationGroup, \
-    QObject, QPoint
+from PySide6.QtCore import QPropertyAnimation, QRect, QByteArray, QEasingCurve, QSequentialAnimationGroup, \
+    QPoint
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget, QGraphicsDropShadowEffect, QSizePolicy
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QGraphicsDropShadowEffect
 
 
 class Animations:

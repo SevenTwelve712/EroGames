@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+
 from TicTacToe import PROJECT_ROOT
 
 

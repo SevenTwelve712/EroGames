@@ -1,10 +1,9 @@
-from PySide6.QtCore import QSize, Qt, QByteArray, QParallelAnimationGroup, QPoint
-from PySide6.QtWidgets import QMainWindow, QGridLayout, QLabel, QWidget, QVBoxLayout, QPushButton, \
-    QHBoxLayout
+from PySide6.QtCore import QSize, Qt, QParallelAnimationGroup, QPoint
+from PySide6.QtWidgets import QMainWindow, QLabel, QWidget, QVBoxLayout, QHBoxLayout
 
+from TicTacToe.game_logic import Game
 from TicTacToe.view.PressableButtonWidget import PressableButtonWidget
 from TicTacToe.view.TicTacToeWidget import TicTacWidget
-from TicTacToe.game_logic import Game
 from TicTacToe.view.ToggleSwitchWidget import ToggleSwitchWidget
 
 
@@ -32,6 +31,10 @@ class MainWnd(QMainWindow):
         self.do_menu()
         self.do_count_tab()
         self.do_resource_pack_choose()
+
+        # Чтоб окно не расползалось по ширине, тк поле у меня не в layout. В теории его нужно было завернуть в виджет,
+        # и затем нормально центрировать
+        self.setFixedWidth(658)
 
     def do_name(self):
         self.name = QLabel('Крестики-нолики')
